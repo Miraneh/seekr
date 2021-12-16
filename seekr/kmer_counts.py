@@ -31,6 +31,7 @@ Any issues can be reported to https://github.com/CalabreseLab
 ---
 """
 
+from _typeshed import Self
 import numpy as np
 
 from enum import Enum
@@ -133,6 +134,51 @@ class BasicCounter:
         if not isinstance(self.log2, Log2):
             raise TypeError(f"log2 must be one of {list(Log2)}")
 
+
+    def DNA_matrix(self, dna):    
+        photo_size = 2** self.k #Define k-mer size==>2^n
+        start = photo_size // 2
+        x = start
+
+        weakStrong = [0] * (photo_size) #CG , AT
+        aminoKeto = [0] * (photo_size) #AC , GT
+        PurPyr = [0] * (photo_size) #AG , CT
+
+        #weak or strong
+        for i in range(len(dna)):
+            if dna[i] == "C" or dna[i] == "G":
+                x = (x + photo_size) // 2
+                weakStrong[x] = weakStrong[x] + 1 
+            
+            elif dna[i] == "A" or dna[i] == "T":
+                x = (x + 0) // 2
+                weakStrong[x] = weakStrong[x] + 1
+
+        x = start
+        #amino or keto       
+        for i in range(len(dna)):
+            if dna[i] == "C" or dna[i] == "A":
+                x = (x + photo_size) // 2
+                aminoKeto[x] = aminoKeto[x] + 1 
+            
+            elif dna[i] == "G" or dna[i] == "T":
+                x = (x + 0) // 2
+                aminoKeto[x] = aminoKeto[x] + 1
+
+        x = start
+        #pur or pyr
+        for i in range(len(dna)):
+            if dna[i] == "C" or dna[i] == "T":
+                x = (x + photo_size) // 2
+                PurPyr[x] = PurPyr[x] + 1 
+            
+            elif dna[i] == "A" or dna[i] == "G":
+                x = (x + 0) // 2
+                PurPyr[x] = PurPyr[x] + 1
+
+        arr = np.concatenate((PurPyr, aminoKeto, weakStrong))
+        return arr
+
     def occurrences(self, row, seq):
         """Counts kmers on a per kilobase scale"""
         counts = defaultdict(int)
@@ -189,11 +235,12 @@ class BasicCounter:
 
     def get_counts(self):
         """Generates kmer counts for a fasta file"""
-        self.counts = np.zeros([len(self.seqs), self.alpha_len ** self.k], dtype=np.float32)
+        self.counts = np.zeros([len(self.seqs), 3*(2 ** self.k)], dtype=np.float32)
         seqs = self._progress()
 
         for i, seq in enumerate(seqs):
-            self.counts[i] = self.occurrences(self.counts[i], seq)
+            #self.counts[i] = self.occurrences(self.counts[i], seq)
+            self.counts[i] = self.DNA_matrix(seq)
         if self.log2 == Log2.pre:
             self.log2_norm()
         if self.mean is not False:
