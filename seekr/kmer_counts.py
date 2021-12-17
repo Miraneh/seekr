@@ -42,7 +42,6 @@ from pandas import DataFrame
 from seekr.my_tqdm import my_tqdm
 from seekr.fasta_reader import Reader
 
-
 Log2 = Enum("Log2", ("pre", "post", "none"))
 
 
@@ -87,18 +86,18 @@ class BasicCounter:
     """
 
     def __init__(
-        self,
-        infasta=None,
-        outfile=None,
-        k=6,
-        binary=True,
-        mean=True,
-        std=True,
-        log2=Log2.post,
-        leave=True,
-        silent=False,
-        label=False,
-        alphabet="AGTC",
+            self,
+            infasta=None,
+            outfile=None,
+            k=6,
+            binary=True,
+            mean=True,
+            std=True,
+            log2=Log2.post,
+            leave=True,
+            silent=False,
+            label=False,
+            alphabet="AGTC",
     ):
         self.infasta = infasta
         self.seqs = None
@@ -134,50 +133,50 @@ class BasicCounter:
         if not isinstance(self.log2, Log2):
             raise TypeError(f"log2 must be one of {list(Log2)}")
 
-
-    def DNA_matrix(self, dna):    
-        photo_size = 2** self.k #Define k-mer size==>2^n
+    def DNA_matrix(self, row, dna):
+        photo_size = 2 ** self.k  # Define k-mer size==>2^n
         start = photo_size // 2
         x = start
 
-        weakStrong = [0] * (photo_size) #CG , AT
-        aminoKeto = [0] * (photo_size) #AC , GT
-        PurPyr = [0] * (photo_size) #AG , CT
+        weakStrong = [0] * photo_size  # CG , AT
+        aminoKeto = [0] * photo_size  # AC , GT
+        PurPyr = [0] * photo_size  # AG , CT
 
-        #weak or strong
+        # weak or strong
         for i in range(len(dna)):
             if dna[i] == "C" or dna[i] == "G":
                 x = (x + photo_size) // 2
-                weakStrong[x] = weakStrong[x] + 1 
-            
+                weakStrong[x] = weakStrong[x] + 1
+
             elif dna[i] == "A" or dna[i] == "T":
                 x = (x + 0) // 2
                 weakStrong[x] = weakStrong[x] + 1
 
         x = start
-        #amino or keto       
+        # amino or keto
         for i in range(len(dna)):
             if dna[i] == "C" or dna[i] == "A":
                 x = (x + photo_size) // 2
-                aminoKeto[x] = aminoKeto[x] + 1 
-            
+                aminoKeto[x] = aminoKeto[x] + 1
+
             elif dna[i] == "G" or dna[i] == "T":
                 x = (x + 0) // 2
                 aminoKeto[x] = aminoKeto[x] + 1
 
         x = start
-        #pur or pyr
+        # pur or pyr
         for i in range(len(dna)):
             if dna[i] == "C" or dna[i] == "T":
                 x = (x + photo_size) // 2
-                PurPyr[x] = PurPyr[x] + 1 
-            
+                PurPyr[x] = PurPyr[x] + 1
+
             elif dna[i] == "A" or dna[i] == "G":
                 x = (x + 0) // 2
                 PurPyr[x] = PurPyr[x] + 1
 
         arr = np.concatenate((PurPyr, aminoKeto, weakStrong))
-        return arr
+        row[:len(arr)] = arr
+        return row
 
     def occurrences(self, row, seq):
         """Counts kmers on a per kilobase scale"""
@@ -185,7 +184,7 @@ class BasicCounter:
         length = len(seq)
         increment = 1000 / (length - self.k + 1)  # fix, original 1000/length, incorrect divisor, should be 1000/(l-k+1)
         for c in range(length - self.k + 1):
-            kmer = seq[c : c + self.k]
+            kmer = seq[c: c + self.k]
             counts[kmer] += increment
         for kmer, n in counts.items():
             if kmer in self.map:
@@ -235,12 +234,12 @@ class BasicCounter:
 
     def get_counts(self):
         """Generates kmer counts for a fasta file"""
-        self.counts = np.zeros([len(self.seqs), 3*(2 ** self.k)], dtype=np.float32)
+        self.counts = np.zeros([len(self.seqs), 3 * (2 ** self.k)], dtype=np.float32)
         seqs = self._progress()
 
         for i, seq in enumerate(seqs):
-            #self.counts[i] = self.occurrences(self.counts[i], seq)
-            self.counts[i] = self.DNA_matrix(seq)
+            # self.counts[i] = self.occurrences(self.counts[i], seq)
+            self.counts[i] = self.DNA_matrix(self.counts[i], seq)
         if self.log2 == Log2.pre:
             self.log2_norm()
         if self.mean is not False:
