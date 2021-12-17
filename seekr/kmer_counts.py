@@ -31,16 +31,15 @@ Any issues can be reported to https://github.com/CalabreseLab
 ---
 """
 
-from _typeshed import Self
-import numpy as np
-
-from enum import Enum
 from collections import defaultdict
+from enum import Enum
 from itertools import product
+
+import numpy as np
 from pandas import DataFrame
 
-from seekr.my_tqdm import my_tqdm
 from seekr.fasta_reader import Reader
+from seekr.my_tqdm import my_tqdm
 
 Log2 = Enum("Log2", ("pre", "post", "none"))
 
