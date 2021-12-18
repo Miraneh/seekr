@@ -162,12 +162,17 @@ class Maker:
         main_sub: bool (default=True)
             If False, skip finding main commected subgraph.
         """
+        print("applying threshold...")
         self.apply_threshold()
+        print("applied threshold...")
         if isinstance(self.adj, np.ndarray):
+            print("making graph...")
             self.graph = networkx.from_numpy_array(self.adj)
         else:
             self.graph = networkx.from_pandas_adjacency(self.adj)
+        print("graph made...")
         networkx.relabel_nodes(self.graph, lambda n: str(n), False)
+        print("relabeled nodes...")
         if clear_adj:
             self.adj = None
         if main_sub:
@@ -176,6 +181,7 @@ class Maker:
     def make_gml_csv_files(self):
         """Wrapper function for most common way to generate .gml file."""
         self.build()
+        print("build done...")
         self.save(True)
         self.get_partition()
         name2group = self.membership2attribute()
